@@ -6,7 +6,7 @@
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
     
   tasks:
-  - name: start an instance with a public IP address
+  - name: Launch EC2 instance
     amazon.aws.ec2_instance:
       name: "public-compute-instance"
       key_name: "virginia"
