@@ -1,0 +1,125 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+  tasks:
+  - name: Create EC2 instances
+    amazon.aws.ec2_instance:
+      name: "{{ item.name }}"
+      key_name: "virginia"
+      instance_type: t2.micro
+      security_group: default
+      region: us-east-1
+      state: absent
+      # aws_access_key: "{{ec2_access_key}}"  # From vault as defined
+      # aws_secret_key: "{{ec2_secret_key}}"  # From vault as defined      
+      network:
+        assign_public_ip: true
+      image_id: "{{ item.image }}"
+      tags:
+        environment: "{{ item.name }}"
+    loop:
+    - { image: "ami-0866a3c8686eaeeba", name: "manage-node-1" } # Update AMI ID according 
+    - { image: "ami-0866a3c8686eaeeba", name: "manage-node-2" } # to your account
+    - { image: "ami-0866a3c8686eaeeba", name: "manage-node-3" }
+
+  # - name: create S3 bucket
+  #   s3_bucket:
+  #     name: myansibles3bucket312
+  #     state: absent
+  #     region: us-east-1
+  #     versioning: yes
+  #     tags:
+  #       name: myansiblebucket
+  #       type: example
+  #   register: s3_url
+
+  # - name: Display s3 url
+  #   debug: var=s3_url
+
+  # - name: Create IAM role for Lambda
+  #   amazon.aws.iam_role:
+  #     name: lambda_execution_role
+  #     assume_role_policy_document: |
+  #       {
+  #         "Version": "2012-10-17",
+  #         "Statement": [
+  #           {
+  #             "Effect": "Allow",
+  #             "Principal": {
+  #               "Service": "lambda.amazonaws.com"
+  #             },
+  #             "Action": "sts:AssumeRole"
+  #           }
+  #         ]
+  #       }
+  #     state: present
+  #   register: lambda_role
+
+  # - name: Attach policy to IAM role
+  #   amazon.aws.iam_policy:
+  #     iam_role: "{{ lambda_role.role.name }}"
+  #     policy_arn: "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  #     state: present
+
+  # - name: Create Lambda function
+  #   amazon.aws.lambda:
+  #     name: my_lambda_function
+  #     state: present
+  #     runtime: python3.8
+  #     role: "{{ lambda_role.role.arn }}"
+  #     handler: lambda_function.lambda_handler
+  #     zip_file: avinashdemofunction.zip
+
+  # - name: Create API Gateway
+  #   amazon.aws.apigateway:
+  #     name: my_api
+  #     state: present
+  #   register: api
+
+  # - name: Create GET method
+  #   amazon.aws.apigateway_method:
+  #     rest_api_id: "{{ api.id }}"
+  #     resource_id: "{{ api.root_resource_id }}"
+  #     http_method: GET
+  #     authorization_type: NONE
+  #     state: present
+
+  # - name: Create POST method
+  #   amazon.aws.apigateway_method:
+  #     rest_api_id: "{{ api.id }}"
+  #     resource_id: "{{ api.root_resource_id }}"
+  #     http_method: POST
+  #     authorization_type: NONE
+  #     state: present
+
+  # - name: Integrate GET method with Lambda
+  #   amazon.aws.apigateway_integration:
+  #     rest_api_id: "{{ api.id }}"
+  #     resource_id: "{{ api.root_resource_id }}"
+  #     http_method: GET
+  #     integration_http_method: POST
+  #     type: AWS_PROXY
+  #     uri: "arn:aws:apigateway:{{ region }}:lambda:path/2015-03-31/functions/{{
+  #       lambda_function.arn }}/invocations"
+  #     state: present
+
+  # - name: Integrate POST method with Lambda
+  #   amazon.aws.apigateway_integration:
+  #     rest_api_id: "{{ api.id }}"
+  #     resource_id: "{{ api.root_resource_id }}"
+  #     http_method: POST
+  #     integration_http_method: POST
+  #     type: AWS_PROXY
+  #     uri: "arn:aws:apigateway:{{ region }}:lambda:path/2015-03-31/functions/{{
+  #       lambda_function.arn }}/invocations"
+  #     state: present
+
+  # - name: Deploy API
+  #   amazon.aws.apigateway_deployment:
+  #     rest_api_id: "{{ api.id }}"
+  #     stage_name: prod
+  #     state: present
